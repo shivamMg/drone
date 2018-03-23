@@ -15,6 +15,7 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -124,7 +125,7 @@ func GetBuildLogs(c *gin.Context) {
 	defer rc.Close()
 
 	c.Header("Content-Type", "application/json")
-	io.Copy(c.Writer, rc)
+	io.Copy(c.Writer, jsonlTojsonArray(rc))
 }
 
 func GetProcLogs(c *gin.Context) {
@@ -156,7 +157,21 @@ func GetProcLogs(c *gin.Context) {
 	defer rc.Close()
 
 	c.Header("Content-Type", "application/json")
-	io.Copy(c.Writer, rc)
+	io.Copy(c.Writer, jsonlTojsonArray(rc))
+}
+
+func jsonlTojsonArray(rc io.Reader) *bytes.Reader {
+	data, s := []byte("["), bufio.NewScanner(rc)
+	first := true
+	for s.Scan() {
+		if !first {
+			data = append(data, []byte(",")...)
+		}
+		data = append(data, s.Bytes()...)
+		first = false
+	}
+	data = append(data, []byte("]")...)
+	return bytes.NewReader(data)
 }
 
 func DeleteBuild(c *gin.Context) {
@@ -728,10 +743,4 @@ func DeleteBuildLogs(c *gin.Context) {
 	c.String(204, "")
 }
 
-var deleteStr = `[
-	{
-	  "proc": %q,
-	  "pos": 0,
-	  "out": "logs purged by %s on %s\n"
-	}
-]`
+var deleteStr = `{"proc": %q, "pos": 0, "out": "logs purged by %s on %s\n"}`
