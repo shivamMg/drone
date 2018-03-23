@@ -124,8 +124,14 @@ func GetBuildLogs(c *gin.Context) {
 
 	defer rc.Close()
 
-	c.Header("Content-Type", "application/json")
-	io.Copy(c.Writer, jsonlTojsonArray(rc))
+	q := c.Request.URL.Query()
+	if q.Get("jsonl") != "" {
+		c.Header("Content-Type", "application/ndjson")
+		io.Copy(c.Writer, rc)
+	} else {
+		c.Header("Content-Type", "application/json")
+		io.Copy(c.Writer, jsonlTojsonArray(rc))
+	}
 }
 
 func GetProcLogs(c *gin.Context) {
@@ -156,8 +162,14 @@ func GetProcLogs(c *gin.Context) {
 
 	defer rc.Close()
 
-	c.Header("Content-Type", "application/json")
-	io.Copy(c.Writer, jsonlTojsonArray(rc))
+	q := c.Request.URL.Query()
+	if q.Get("jsonl") != "" {
+		c.Header("Content-Type", "application/ndjson")
+		io.Copy(c.Writer, rc)
+	} else {
+		c.Header("Content-Type", "application/json")
+		io.Copy(c.Writer, jsonlTojsonArray(rc))
+	}
 }
 
 func jsonlTojsonArray(rc io.Reader) *bytes.Reader {
