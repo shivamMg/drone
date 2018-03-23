@@ -281,10 +281,14 @@ func (r *runner) run(ctx context.Context) error {
 		loglogger.Debug().Msg("log stream copied")
 
 		file := &rpc.File{}
-		file.Mime = "application/json+logs"
+		file.Mime = "application/ndjson+logs"
 		file.Proc = proc.Alias
 		file.Name = "logs.json"
-		file.Data, _ = json.Marshal(logstream.Lines())
+		for _, line := range logstream.Lines() {
+			d, _ := json.Marshal(line)
+			d = append(d, '\n')
+			file.Data = append(file.Data, d...)
+		}
 		file.Size = len(file.Data)
 		file.Time = time.Now().Unix()
 
